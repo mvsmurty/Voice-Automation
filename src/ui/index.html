@@ -1,0 +1,410 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Voice test console</title>
+<style>
+:root{--bg:#f7f6f3;--panel:#fff;--ink:#1f1e1c;--mute:#6b6a65;--line:#e4e2dc;--acc:#2f5fd0;--accbg:#e8eefc;--ok:#1f7a45;--okbg:#e3f4ea;--bad:#b3261e;--badbg:#fbe9e7;--warn:#8a5a00;--warnbg:#fdf1d8;--chip:#efede7}
+@media (prefers-color-scheme:dark){:root{--bg:#161614;--panel:#1f1f1c;--ink:#ecebe6;--mute:#9a988f;--line:#33322e;--acc:#7da2ff;--accbg:#22304f;--ok:#7fd6a0;--okbg:#17301f;--bad:#ff9d94;--badbg:#3a1d1a;--warn:#f0c36d;--warnbg:#3a2e12;--chip:#2a2927}}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.5 system-ui,-apple-system,Segoe UI,sans-serif}
+header{display:flex;align-items:center;gap:20px;padding:12px 24px;border-bottom:1px solid var(--line);background:var(--panel);position:sticky;top:0;z-index:5}
+header h1{font-size:15px;margin:0;font-weight:600}nav{display:flex;gap:4px}
+nav button{border:0;background:none;color:var(--mute);padding:6px 12px;border-radius:6px;font:inherit;cursor:pointer}
+nav button.on{background:var(--chip);color:var(--ink);font-weight:600}
+main{max-width:1280px;margin:0 auto;padding:20px 24px}
+button,input,select,textarea{font:inherit;color:inherit}
+.btn{border:1px solid var(--line);background:var(--panel);padding:6px 12px;border-radius:6px;cursor:pointer}
+.btn:hover{border-color:var(--mute)}.btn.pri{background:var(--acc);color:#fff;border-color:var(--acc)}.btn.sm{padding:2px 8px;font-size:12px}.btn.del{color:var(--bad)}
+input,select,textarea{border:1px solid var(--line);background:var(--panel);border-radius:6px;padding:6px 8px;width:100%}
+textarea{min-height:64px;resize:vertical}label{display:block;font-size:12px;color:var(--mute);margin:10px 0 3px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:14px 16px}
+.row{display:flex;gap:10px;align-items:center}.grow{flex:1}.mute{color:var(--mute)}.sm{font-size:12px}
+.tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin:0 0 14px}
+.tile .n{font-size:22px;font-weight:600}
+table{width:100%;border-collapse:collapse}th{text-align:left;font-size:12px;color:var(--mute);font-weight:500;padding:6px 10px}
+td{padding:8px 10px;border-top:1px solid var(--line);vertical-align:middle}tr.click{cursor:pointer}tr.click:hover td{background:var(--chip)}
+.pill{display:inline-block;font-size:12px;padding:1px 9px;border-radius:10px}
+.ok{background:var(--okbg);color:var(--ok)}.bad{background:var(--badbg);color:var(--bad)}.warn{background:var(--warnbg);color:var(--warn)}.run{background:var(--accbg);color:var(--acc)}.gray{background:var(--chip);color:var(--mute)}
+.split{display:grid;grid-template-columns:300px 1fr;gap:16px}@media(max-width:900px){.split{grid-template-columns:1fr}}
+.tree .c{font-weight:600;margin:10px 0 2px;display:flex;align-items:center;gap:6px}.tree .l{margin:6px 0 2px 10px;color:var(--mute);font-size:12px}
+.tree .s{margin:1px 0 1px 18px;padding:3px 8px;border-radius:6px;cursor:pointer;display:flex;gap:6px;align-items:center}
+.tree .s:hover,.tree .s.on{background:var(--chip)}
+.chat{display:flex;flex-direction:column;gap:6px;max-height:520px;overflow:auto;padding:4px}
+.msg{max-width:82%;padding:7px 10px;border-radius:10px;cursor:pointer}
+.msg.agent{background:var(--accbg);align-self:flex-start}.msg.caller{background:var(--chip);align-self:flex-end}
+.msg small{color:var(--mute);display:block;font-size:11px}.msg.cur{outline:2px solid var(--acc)}
+.kv{display:grid;grid-template-columns:130px 1fr;gap:4px 10px;font-size:13px}
+.err{color:var(--bad)}code,.mono{font-family:ui-monospace,Menlo,monospace;font-size:12px}
+.dock{position:fixed;right:16px;bottom:16px;width:360px;max-height:50vh;overflow:auto;z-index:9}
+.hidden{display:none}.cbl{position:absolute;left:0;right:0;top:100%;margin-top:2px;max-height:260px;overflow:auto;background:var(--panel);border:1px solid var(--line);border-radius:6px;z-index:30;box-shadow:0 6px 18px rgba(0,0,0,.12)}.cbl div{padding:6px 10px;cursor:pointer;font-size:13px}.cbl div.act{background:var(--chip)}.cbl div.cur{font-weight:600}audio{width:100%}
+.pair{display:grid;grid-template-columns:1fr 1fr 26px;gap:6px;margin:3px 0}
+</style>
+</head>
+<body>
+<header><h1>Voice test console</h1>
+<nav><button data-t="runs" class="on">Runs</button><button data-t="scen">Scenarios</button><button data-t="set">Settings</button></nav>
+<span class="grow"></span><span id="tok" class="sm"></span></header>
+<div id="tokbar" class="hidden" style="background:var(--badbg);color:var(--bad);border-bottom:1px solid var(--line);padding:10px 24px"></div>
+<main>
+<section id="t-runs"></section>
+<section id="t-scen" class="hidden"></section>
+<section id="t-set" class="hidden"></section>
+</main>
+<div id="dock" class="card dock hidden"></div>
+<script>
+const $=(s,r=document)=>r.querySelector(s);
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+async function api(path,opt={}){
+  const o={method:opt.method||'GET',headers:{'x-vm-ui':'1','content-type':'application/json'}};
+  if(opt.body!==undefined)o.body=JSON.stringify(opt.body);
+  const r=await fetch('/api/'+path,o);const j=await r.json().catch(()=>({}));
+  if(!r.ok)throw new Error(j.error||('HTTP '+r.status));return j;
+}
+const fmtDur=ms=>{const s=Math.round(ms/1000);return Math.floor(s/60)+':'+String(s%60).padStart(2,'0')};
+const fmtT=ts=>ts?new Date(ts).toLocaleString([], {month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'}):'';
+const mmss=s=>Math.floor(s/60)+':'+String(Math.floor(s%60)).padStart(2,'0');
+function resultPill(r){
+  if(r.run)r=Object.assign({},r.run,{endReason:(r.report&&r.report.endReason)||r.run.endReason});
+  if(r.status==='queued')return '<span class="pill gray">Queued</span>';
+  if(r.status==='running')return '<span class="pill run">Running</span>';
+  if(r.status==='cancelled')return '<span class="pill gray">Cancelled</span>';
+  if(r.status==='failed'&&!r.endReason)return '<span class="pill bad">Error</span>';
+  const e=r.endReason||'';
+  if(/book(ed)?\b.*success|appointment (is )?booked|booked successfully/i.test(e))return '<span class="pill ok">Booked</span>';
+  if(/callback/i.test(e))return '<span class="pill warn">Callback</span>';
+  if(/max_duration|call_failed|gemini_error|ended_by_agent/.test(e))return '<span class="pill bad">'+esc(e.replace(/_/g,' '))+'</span>';
+  if(/issue|error|fail|cannot|could not|unable/i.test(e))return '<span class="pill bad">Failed</span>';
+  return '<span class="pill gray">Ended</span>';
+}
+let tab='runs';
+document.querySelectorAll('nav button').forEach(b=>b.onclick=()=>show(b.dataset.t));
+function show(t){tab=t;document.querySelectorAll('nav button').forEach(b=>b.classList.toggle('on',b.dataset.t===t));
+  for(const k of['runs','scen','set'])$('#t-'+k).classList.toggle('hidden',k!==t);
+  ({runs:loadRuns,scen:loadScen,set:loadSet})[t]();}
+
+/* ---------------- Runs ---------------- */
+let runsCache=[],filt={q:'',country:'',res:''};
+async function loadRuns(){
+  runsCache=await api('runs');renderRuns();
+}
+function renderRuns(){
+  const el=$('#t-runs');
+  const rows=runsCache.filter(r=>(!filt.country||r.country===filt.country)&&(!filt.res||r.verdict===filt.res)&&(!filt.q||[r.sipCallId,r.platformSessionId,r.traceId,r.callSid,r.sipUser,r.scenarioId,r.id].join(' ').toLowerCase().includes(filt.q.toLowerCase())));
+  const booked=runsCache.filter(r=>/booked successfully|appointment booked/i.test(r.endReason||'')).length;
+  const p50s=runsCache.map(r=>r.p50).filter(Boolean);
+  const avg=p50s.length?(p50s.reduce((a,b)=>a+b,0)/p50s.length/1000).toFixed(1)+' s':'-';
+  const countries=[...new Set(runsCache.map(r=>r.country).filter(Boolean))];
+  el.innerHTML=`<div class="tiles">
+   <div class="card tile"><div class="mute sm">Runs</div><div class="n">${runsCache.length}</div></div>
+   <div class="card tile"><div class="mute sm">Passed</div><div class="n">${runsCache.filter(r=>r.verdict==='pass').length}</div></div>
+   <div class="card tile"><div class="mute sm">Failed</div><div class="n">${runsCache.filter(r=>r.verdict==='fail').length}</div></div>
+   <div class="card tile"><div class="mute sm">Avg latency p50</div><div class="n">${avg}</div></div></div>
+  <div class="row" style="margin-bottom:10px"><input id="q" placeholder="Search session id, scenario or run" value="${esc(filt.q)}" style="max-width:340px">
+   <select id="fc" style="max-width:160px"><option value="">All countries</option>${countries.map(c=>`<option ${filt.country===c?'selected':''}>${c}</option>`).join('')}</select>
+   <select id="fv" style="max-width:140px"><option value="">All verdicts</option><option value="pass" ${filt.res==='pass'?'selected':''}>Pass</option><option value="fail" ${filt.res==='fail'?'selected':''}>Fail</option></select><span class="grow"></span><button class="btn" id="rf">Refresh</button></div>
+  <div class="card" style="padding:0"><table><tr><th>Started</th><th>Scenario</th><th>Country</th><th>Lang</th><th>Verdict</th><th>Result</th><th>Checks</th><th>Length</th><th>Latency p50</th><th>Session id</th></tr>
+  ${rows.map(r=>`<tr class="click" data-id="${esc(r.id)}"><td>${fmtT(r.startedAt)}</td><td>${esc(r.scenarioId)}</td><td>${esc(r.country||'')}</td><td>${esc(r.language)}</td><td>${verdictPill(r.verdict)}</td><td>${resultPill(r)}</td><td>${chkPill(r)}</td><td>${r.durationMs?fmtDur(r.durationMs):'-'}</td><td>${r.p50?(r.p50/1000).toFixed(1)+' s':'-'}</td><td class="mono">${esc((r.platformSessionId||r.sipCallId||'').slice(0,14))}</td></tr>`).join('')||'<tr><td colspan="10" class="mute">No runs yet. Go to Scenarios and press Run.</td></tr>'}</table></div>`;
+  $('#q').oninput=e=>{filt.q=e.target.value;renderRuns();$('#q').focus();$('#q').setSelectionRange(99,99)};
+  $('#fc').onchange=e=>{filt.country=e.target.value;renderRuns()};
+  $('#fv').onchange=e=>{filt.res=e.target.value;renderRuns()};
+  $('#rf').onclick=loadRuns;
+  el.querySelectorAll('tr.click').forEach(tr=>tr.onclick=()=>openRun(tr.dataset.id));
+}
+function sipRows(r){
+  const tr=r.sipTrace||[];if(!tr.length)return '<span class="mute">Not recorded for this run.</span>';
+  const t0=tr[0].t;
+  return tr.map(m=>{
+    const L=String(m.msg).split(/\r?\n/);
+    const first=L[0].replace(/ sip:[^ ]+@[^ ]+/,' …');
+    const keep=L.filter(l=>/^(X-|Reason:|Warning:|CSeq:)/i.test(l)).map(l=>l.trim()).join(' · ');
+    return `<div><span class="mute">+${((m.t-t0)/1000).toFixed(1)}s ${m.dir==='send'?'→':'←'}</span> ${esc(first)}${keep?' <span class="mute">'+esc(keep)+'</span>':''}</div>`}).join('')
+}
+function verdictPill(v){
+  return v==='pass'?'<span class="pill ok"><b>Pass</b></span>':v==='fail'?'<span class="pill bad"><b>Fail</b></span>':v==='cancelled'?'<span class="pill gray">Cancelled</span>':'<span class="mute">-</span>';
+}
+function chkPill(r){
+  if(r.checksTotal==null)return '<span class="mute">-</span>';
+  const p=r.checksPassed,t=r.checksTotal;
+  return `<span class="pill ${p===t?'ok':p>=t-2?'warn':'bad'}">${p}/${t}</span>`;
+}
+function chkCard(c){
+  if(!c||!c.applicable)return '';
+  return `<div class="card" style="margin-bottom:12px"><div class="row"><b class="sm">Stage checks</b><span class="grow"></span><span class="pill ${c.passed===c.total?'ok':c.passed>=c.total-2?'warn':'bad'}">${c.passed}/${c.total}</span></div>
+   ${c.stages.map(s=>`<div style="margin-top:8px"><span class="pill ${s.status==='pass'?'ok':s.status==='fail'?'bad':'gray'}" style="min-width:34px;text-align:center">${s.status==='pass'?'Pass':s.status==='fail'?'Fail':'n/a'}</span> <b class="sm">${esc(s.label)}</b>${s.detail?`<div class="mute sm" style="margin-left:2px">${esc(s.detail)}</div>`:''}</div>`).join('')}
+   <div class="mute sm" style="margin-top:8px">Computed from the transcript the caller model heard, so a mis-transcription can show as a fail.</div></div>`;
+}
+let runTimer=null;
+async function openRun(id,keep){
+  clearTimeout(runTimer);
+  const y=keep?window.scrollY:0;const chatTop=keep?($('#chat')||{}).scrollTop:0;
+  const d=await api('runs/'+id);const el=$('#t-runs');
+  const restore=()=>{if(keep){window.scrollTo(0,y);const c=$('#chat');if(c&&chatTop)c.scrollTop=chatTop}};
+  if(!d.report){
+    const live=d.run.status==='queued'||d.run.status==='running';
+    el.innerHTML=`<div class="row" style="margin-bottom:12px"><button class="btn" id="back">‹ Runs</button><h2 style="margin:0;font-size:16px">${esc(d.run.scenarioId||id)}</h2>${resultPill(d)}
+      <span class="grow"></span><button class="btn sm" id="rfr">Refresh</button> ${live?'<button class="btn del sm" id="cx">Cancel</button>':'<button class="btn del sm" id="del">Delete run</button>'}</div>
+      ${d.run.error?`<div class="card err" style="margin-bottom:12px">${esc(d.run.error)}</div>`:''}
+      <div class="card"><b class="sm">${live?'Live transcript':'Transcript'}</b><div class="chat" style="margin-top:8px">${d.lines.map(m=>`<div class="msg ${m.who}"><small>${m.who==='agent'?'Agent':'Caller'}</small>${esc(m.text)}</div>`).join('')||'<span class="mute sm">'+(live?'Dialing…':'No transcript')+'</span>'}</div></div>
+      <div class="card" style="margin-top:12px"><b class="sm">Log</b><pre class="mono" style="white-space:pre-wrap;margin:6px 0 0">${esc(d.log.join('\n'))}</pre></div>`;
+    $('#back').onclick=()=>{clearTimeout(runTimer);loadRuns()};
+    if($('#cx'))$('#cx').onclick=async()=>{await api('run/'+id+'/cancel',{method:'POST',body:{}});openRun(id)};
+    if($('#del'))$('#del').onclick=async()=>{if(confirm('Delete this run?')){await api('runs/'+id,{method:'DELETE'});loadRuns()}};
+    $('#rfr').onclick=()=>openRun(id,true);
+    restore();
+    return;
+  }
+  const r=d.report;
+  const t0=r.transcript[0]?.t||0;
+  const startT=(r.events.find(e=>e.event==='call-connected')||{t:t0}).t;
+  el.innerHTML=`<div class="row" style="margin-bottom:12px"><button class="btn" id="back">‹ Runs</button><h2 style="margin:0;font-size:16px">${esc(r.scenario.id)}</h2>${verdictPill(d.run.verdict)} ${resultPill(d)}
+   <span class="grow"></span><button class="btn sm" id="rfr">Refresh</button> <button class="btn del sm" id="del">Delete run</button></div>
+  <div class="split" style="grid-template-columns:1fr 340px">
+   <div><div class="card" style="margin-bottom:12px"><div class="row"><b class="sm">Audio</b>
+     <button class="btn sm" data-a="agent">Agent</button><button class="btn sm" data-a="caller">Caller</button><button class="btn sm" id="both">Both</button></div>
+     <audio id="au" controls preload="metadata" src="/api/runs/${id}/agent.wav" style="margin-top:8px"></audio>
+     <div class="mute sm" id="aunote">Playing agent track. Caller track is a separate file.</div></div>
+    <div class="card"><b class="sm">Transcript</b><div class="chat" id="chat" style="margin-top:8px">
+    ${r.transcript.map((m,i)=>`<div class="msg ${m.who}" data-s="${Math.max(0,(m.t-startT)/1000-4).toFixed(1)}"><small>${m.who==='agent'?'Agent':'Caller'} · ${mmss(Math.max(0,(m.t-startT)/1000))}</small>${esc(m.text)}</div>`).join('')}</div>
+    <div class="mute sm" style="margin-top:6px">Click a line to jump near that point in the agent audio (approximate).</div></div></div>
+   <div><div class="card" style="margin-bottom:12px"><b class="sm">Session</b><div class="kv" style="margin-top:8px">
+     <span class="mute">SIP call id</span><span class="mono">${esc(r.sipCallId||'-')} <button class="btn sm" id="cp">Copy</button></span>
+     <span class="mute">Platform session</span><span><input id="ps" class="mono" placeholder="Paste session id from the platform" value="${esc(d.run.platformSessionId||'')}" style="padding:2px 6px"><button class="btn sm" id="ps-save" style="margin-top:4px">Save</button> <span id="ps-msg" class="sm"></span></span>
+     <span class="mute">SIP trace id</span><span class="mono" title="X-Trace-Id on the call's 200 OK. NOT the platform session id.">${esc(d.run.traceId||'-')}</span>
+     <span class="mute">Call sid</span><span class="mono">${esc(d.run.callSid||'-')}</span>
+     <span class="mute">Caller number</span><span class="mono">${esc(r.platform.callerNumber||'(test user id)')}</span>
+     <span class="mute">Caller (SIP user)</span><span class="mono" title="Matches voice_session_start.caller in the platform trace">${esc(r.sipUser||'-')}</span>
+     <span class="mute">Result</span><span>${esc(r.endReason)}</span>
+     <span class="mute">Country / lang</span><span>${esc(r.meta?.country||'-')} / ${esc(r.scenario.language)}</span>
+     <span class="mute">Length</span><span>${fmtDur(r.durationMs)}</span>
+     <span class="mute">Latency p50 / p95</span><span>${r.latencyMs.p50??'-'} / ${r.latencyMs.p95??'-'} ms (${r.latencyMs.samples} turns)</span>
+     <span class="mute">Channel</span><span class="mono">${esc((r.platform.connectionId||'').slice(0,13))}</span></div></div>
+    ${chkCard(d.checks)}
+    <div class="card" style="margin-bottom:12px"><b class="sm">Latency per turn (ms)</b><div style="display:flex;gap:3px;align-items:flex-end;height:60px;margin-top:8px">
+      ${(r.latencyMs.all||[]).map(v=>`<div title="${v} ms" style="flex:1;background:var(--acc);height:${Math.min(100,v/40)}%;min-height:2px;border-radius:2px"></div>`).join('')||'<span class="mute sm">none</span>'}</div></div>
+    <div class="card" style="margin-bottom:12px"><b class="sm">SIP exchange</b><div class="mono" style="margin-top:6px;max-height:220px;overflow:auto;font-size:11px">${sipRows(r)}</div></div>
+    <div class="card"><b class="sm">Scenario</b><div class="sm" style="margin-top:6px"><div class="mute">Goal</div>${esc(r.scenario.goal)}
+      <div class="mute" style="margin-top:6px">Expected</div><ul style="margin:2px 0 0 16px;padding:0">${(r.scenario.expect||[]).map(x=>`<li>${esc(x)}</li>`).join('')}</ul></div></div></div></div>`;
+  $('#back').onclick=loadRuns;
+  $('#rfr').onclick=()=>openRun(id,true);
+  restore();
+  $('#del').onclick=async()=>{if(confirm('Delete this run and its audio?')){await api('runs/'+id,{method:'DELETE'});loadRuns()}};
+  $('#ps-save').onclick=async()=>{try{await api('runs/'+id+'/session',{method:'PUT',body:{sessionId:$('#ps').value}});$('#ps-msg').textContent='Saved'}catch(e){$('#ps-msg').innerHTML='<span class="err">'+esc(e.message)+'</span>'}};
+  $('#cp').onclick=()=>navigator.clipboard?.writeText(r.sipCallId||'');
+  const au=$('#au');
+  el.querySelectorAll('[data-a]').forEach(b=>b.onclick=()=>{au.src=`/api/runs/${id}/${b.dataset.a}.wav`;$('#aunote').textContent='Playing '+b.dataset.a+' track.';au.play()});
+  $('#both').onclick=()=>{$('#aunote').textContent='Combined track is not built yet. Play agent and caller one after the other.'};
+  el.querySelectorAll('.msg').forEach(m=>m.onclick=()=>{au.currentTime=Number(m.dataset.s);au.play()});
+}
+
+/* ---------------- Scenarios ---------------- */
+let treeData=[],sel=null,channels=null,repeatN=1;
+const LANGS=['de-DE','en-US','en-GB','cs-CZ','sk-SK','fr-FR','it-IT','nb-NO'];
+async function loadScen(){treeData=await api('tree');renderScen();pollJobs()}
+function renderScen(){
+  const el=$('#t-scen');
+  el.innerHTML=`<div class="split"><div class="card tree">
+   <div class="row"><b>Scenarios</b><span class="grow"></span><span class="mute sm">Runs each</span><select id="rep" style="width:60px;padding:2px 4px">${[1,2,3,5,10].map(n=>`<option ${n===repeatN?'selected':''}>${n}</option>`).join('')}</select><button class="btn sm" id="addC">+ Country</button></div>
+   ${treeData.map(c=>`<div class="c"><span class="grow">${esc(c.code)} <span class="mute sm">${esc(c.name)}</span></span>
+     <button class="btn sm" data-ec="${c.code}">Edit</button><button class="btn sm" data-al="${c.code}">+ Lang</button></div>
+     ${c.languages.map(l=>`<div class="l">${l.language} <button class="btn sm" data-ns="${c.code}|${l.language}">+ Scenario</button>
+        <button class="btn sm pri" data-rl="${c.code}/${l.language}">Run all</button></div>
+        ${l.scenarios.map(s=>`<div class="s ${sel===s.path?'on':''}" data-p="${esc(s.path)}"><span class="grow">${esc(s.id)}</span><button class="btn sm pri" data-run="${esc(s.path)}">Run</button></div>`).join('')}`).join('')}`).join('')||'<p class="mute">No countries yet. Add one.</p>'}
+   </div><div id="ed"><div class="card mute">Select a scenario to edit it, or add a new one.</div></div></div>`;
+  $('#rep').onchange=e=>{repeatN=Number(e.target.value)};
+  $('#addC').onclick=()=>editCountry({code:'',name:'',connectionId:'',facts:{},answers:{}});
+  el.querySelectorAll('[data-ec]').forEach(b=>b.onclick=()=>editCountry(treeData.find(c=>c.code===b.dataset.ec)));
+  el.querySelectorAll('[data-al]').forEach(b=>b.onclick=async()=>{const l=prompt('Language code (e.g. de-DE, en-US, cs-CZ)','');if(l){try{await api('language',{method:'POST',body:{country:b.dataset.al,language:l.trim()}});loadScen()}catch(e){alert(e.message)}}});
+  el.querySelectorAll('[data-ns]').forEach(b=>b.onclick=()=>{const[c,l]=b.dataset.ns.split('|');editScenario(c,l,null)});
+  el.querySelectorAll('[data-p]').forEach(d=>d.onclick=async e=>{if(e.target.closest('[data-run]'))return;const[c,l]=d.dataset.p.split('/');sel=d.dataset.p;renderScen();editScenario(c,l,d.dataset.p)});
+  el.querySelectorAll('[data-run]').forEach(b=>b.onclick=()=>runPaths([b.dataset.run]));
+  el.querySelectorAll('[data-rl]').forEach(b=>b.onclick=()=>{const pre=b.dataset.rl+'/';const ps=[];treeData.forEach(c=>c.languages.forEach(l=>l.scenarios.forEach(s=>{if(s.path.startsWith(pre))ps.push(s.path)})));runPaths(ps)});
+}
+async function runPaths(ps){
+  if(!ps.length)return alert('No scenarios to run');
+  try{await api('run',{method:'POST',body:{paths:ps,repeat:repeatN}});pollJobs(true)}catch(e){alert(e.message)}
+}
+function pairsHtml(obj,name){const e=Object.entries(obj||{});if(!e.length)e.push(['','']);
+  return `<div data-pairs="${name}">${e.map(([k,v])=>`<div class="pair"><input placeholder="key" value="${esc(k)}"><input placeholder="value" value="${esc(v)}"><button class="btn sm" type="button" data-x>×</button></div>`).join('')}</div><button class="btn sm" type="button" data-addp="${name}">+ Add</button>`}
+function wirePairs(root){
+  root.querySelectorAll('[data-addp]').forEach(b=>b.onclick=()=>{const w=root.querySelector(`[data-pairs="${b.dataset.addp}"]`);w.insertAdjacentHTML('beforeend','<div class="pair"><input placeholder="key"><input placeholder="value"><button class="btn sm" type="button" data-x>×</button></div>');wirePairs(root)});
+  root.querySelectorAll('[data-x]').forEach(b=>b.onclick=()=>b.parentElement.remove());
+}
+const readPairs=(root,name)=>Object.fromEntries([...root.querySelectorAll(`[data-pairs="${name}"] .pair`)].map(p=>[...p.querySelectorAll('input')].map(i=>i.value.trim())).filter(([k,v])=>k&&v));
+function chLabel(o){return (o.name||'unnamed')+' · '+(o.phone||'no number')+(o.studio===false?' (no test target)':'')}
+function chPicker(id){return `<div style="position:relative"><input type="hidden" id="${id}"><input id="${id}-q" autocomplete="off" placeholder="Search by channel name or phone number" style="padding-right:26px"><span style="position:absolute;right:9px;top:7px;pointer-events:none;color:var(--mute)">▾</span><div id="${id}-l" class="cbl hidden"></div></div>`}
+function wireCh(id,opts,selVal,firstLabel){
+  const val=$('#'+id),q=$('#'+id+'-q'),box=$('#'+id+'-l');
+  let cur=selVal||'',typed=false,act=0,items=[];
+  const labelOf=v=>v?(opts.find(o=>o.connectionId===v)?chLabel(opts.find(o=>o.connectionId===v)):v.slice(0,13)):firstLabel;
+  const setShown=()=>{val.value=cur;q.value=labelOf(cur)};
+  const render=()=>{
+    const term=typed?q.value.trim().toLowerCase().replace(/\s/g,''):'';
+    items=[{v:'',t:firstLabel}].concat(opts.filter(o=>!term||(chLabel(o)+o.connectionId+(o.type||'')).toLowerCase().replace(/\s/g,'').includes(term)).map(o=>({v:o.connectionId,t:chLabel(o)})));
+    if(act>=items.length)act=0;
+    box.innerHTML=items.map((it,i)=>`<div data-i="${i}" class="${i===act?'act':''}${it.v===cur?' cur':''}">${esc(it.t)}</div>`).join('')||'<div class="mute">No match</div>';
+    box.classList.remove('hidden');
+    const a=box.querySelector('.act');if(a)a.scrollIntoView({block:'nearest'});
+  };
+  const pick=i=>{if(!items[i])return;cur=items[i].v;typed=false;setShown();box.classList.add('hidden')};
+  const close=()=>{box.classList.add('hidden');typed=false;setShown()};
+  q.onfocus=()=>{q.select();typed=false;act=Math.max(0,items.findIndex(x=>x.v===cur));render();act=Math.max(0,items.findIndex(x=>x.v===cur));render()};
+  q.oninput=()=>{typed=true;act=0;render()};
+  q.onblur=()=>setTimeout(close,120);
+  q.onkeydown=e=>{
+    if(e.key==='ArrowDown'){act=Math.min(items.length-1,act+1);render();e.preventDefault()}
+    else if(e.key==='ArrowUp'){act=Math.max(0,act-1);render();e.preventDefault()}
+    else if(e.key==='Enter'){pick(act);e.preventDefault();q.blur()}
+    else if(e.key==='Escape'){close();q.blur()}
+  };
+  box.onmousedown=e=>{const d=e.target.closest('[data-i]');if(d){e.preventDefault();pick(Number(d.dataset.i));q.blur()}};
+  setShown();
+}
+const lines=s=>s.split('\n').map(x=>x.trim()).filter(Boolean);
+async function editScenario(country,language,path){
+  let d={id:'',persona:'',goal:'',facts:{},answers:{},behaviour:'',steps:[],expect:[],maxSeconds:360};
+  if(path)d=await api('scenario?path='+encodeURIComponent(path));
+  channels=channels||await api('channels').catch(e=>({error:e.message}));
+  const chOpts=Array.isArray(channels)?channels:[];
+  const cdef=(treeData.find(c=>c.code===country)||{}).connectionId||'';
+  const cdefMode=(treeData.find(c=>c.code===country)||{}).callMode||'studio';
+  const ed=$('#ed');
+  ed.innerHTML=`<div class="card"><div class="row"><b>${path?'Edit':'New'} scenario</b><span class="mute sm">${country} · ${language} (caller speaks ${language})</span></div>
+   <label>Scenario id (file name)</label><input id="f-id" value="${esc(d.id)}" ${path?'disabled':''} placeholder="book-stored">
+   <label>Voice channel (which line the caller dials). Pick different channels to run scenarios in parallel on different lines.</label>
+${chPicker("f-conn")}
+   <label>Caller phone number (override; empty = country default)</label><input id="f-from" value="${esc(d.callerNumber||'')}" placeholder="+4915112345678" style="max-width:240px">
+   <label>Dial via</label><select id="f-mode"><option value="">Country default${cdefMode?' ('+(cdefMode==='phone'?'phone number':'Studio test call')+')':''}</option><option value="studio" ${d.callMode==='studio'?'selected':''}>Studio test call</option><option value="phone" ${d.callMode==='phone'?'selected':''}>Phone number</option></select>
+   <label>Persona</label><input id="f-persona" value="${esc(d.persona)}">
+   <label>Goal</label><textarea id="f-goal">${esc(d.goal)}</textarea>
+   <label>Caller details (facts: name, plate, size, phone...)</label>${pairsHtml(d.facts,'facts')}
+   <label>Answers to questions the agent may ask (topic → reply)</label>${pairsHtml(d.answers,'answers')}
+   <label>Steps, in order (one per line)</label><textarea id="f-steps" style="min-height:140px">${esc((d.steps||[]).join('\n'))}</textarea>
+   <label>Behaviour</label><input id="f-beh" value="${esc(d.behaviour)}">
+   <label>Expected outcomes (one per line)</label><textarea id="f-exp">${esc((d.expect||[]).join('\n'))}</textarea>
+   <label>Hang up only after the agent says one of these (regex, one per line; leave empty to allow ending any time)</label><textarea id="f-end">${esc((d.endRequires||[]).join('\n'))}</textarea>
+   <label>Max call length (seconds)</label><input id="f-max" type="number" min="20" max="600" value="${d.maxSeconds||360}" style="max-width:140px">
+   <div class="row" style="margin-top:14px"><button class="btn pri" id="save">Save</button>${path?'<button class="btn" id="saverun">Save and run</button><span class="grow"></span><button class="btn del" id="rm">Delete</button>':''}<span id="msg" class="sm"></span></div></div>`;
+  wirePairs(ed);
+  wireCh('f-conn',chOpts,d.connectionId||'','Country default'+(cdef?' ('+cdef.slice(0,8)+'…)':''));
+  const save=async()=>{
+    const data={id:path?d.id:$('#f-id').value.trim(),persona:$('#f-persona').value.trim(),goal:$('#f-goal').value.trim(),facts:readPairs(ed,'facts'),answers:readPairs(ed,'answers'),
+      steps:lines($('#f-steps').value),behaviour:$('#f-beh').value.trim(),expect:lines($('#f-exp').value),endRequires:lines($('#f-end').value),maxSeconds:Number($("#f-max").value)||360,language};
+    if($('#f-conn').value)data.connectionId=$('#f-conn').value;
+    if($('#f-mode').value)data.callMode=$('#f-mode').value;
+    if($('#f-from').value.trim())data.callerNumber=$('#f-from').value.replace(/[\s-]/g,'');
+    try{const r=await api('scenario',{method:'PUT',body:{country,language,data}});$('#msg').textContent='Saved';sel=r.path;await loadScen();return r.path}
+    catch(e){$('#msg').innerHTML='<span class="err">'+esc(e.message.slice(0,300))+'</span>'}
+  };
+  $('#save').onclick=save;
+  if(path){$('#saverun').onclick=async()=>{const p=await save();if(p)runPaths([p])};
+    $('#rm').onclick=async()=>{if(confirm('Delete this scenario?')){await api('scenario?path='+encodeURIComponent(path),{method:'DELETE'});sel=null;loadScen()}}}
+}
+async function editCountry(c){
+  channels=channels||await api('channels').catch(e=>({error:e.message}));
+  const opts=Array.isArray(channels)?channels:[];
+  $('#ed').innerHTML=`<div class="card"><b>${c.code?'Edit country '+esc(c.code):'New country'}</b>
+   <label>Country code (2 letters)</label><input id="c-code" value="${esc(c.code)}" ${c.code?'disabled':''} style="max-width:120px">
+   <label>Name</label><input id="c-name" value="${esc(c.name)}">
+   <label>Voice channel (the line the caller dials)</label>
+   ${chPicker("c-conn")}
+   <label>Caller phone number the agent sees (E.164, e.g. +4915112345678; empty = test user id)</label><input id="c-from" value="${esc(c.callerNumber||'')}" placeholder="+4915112345678" style="max-width:240px">
+   <label>Dial via</label>
+   <select id="c-mode"><option value="studio" ${c.callMode!=='phone'?'selected':''}>Studio test call (test alias)</option><option value="phone" ${c.callMode==='phone'?'selected':''}>Phone number (real inbound route, real SIP headers)</option></select>
+   ${channels?.error?`<div class="err sm">Could not load channels: ${esc(channels.error)}</div>`:''}
+   <label>Shared caller details for every scenario in this country (e.g. mobile number, email, plate rules)</label>${pairsHtml(c.facts,'facts')}
+   <label>Shared answers</label>${pairsHtml(c.answers,'answers')}
+   <div class="row" style="margin-top:14px"><button class="btn pri" id="c-save">Save</button><button class="btn" id="c-refresh">Reload channels</button><span id="msg" class="sm"></span></div></div>`;
+  wirePairs($('#ed'));
+  wireCh('c-conn',opts,c.connectionId||'','Select a channel');
+  $('#c-refresh').onclick=async()=>{channels=null;editCountry(c)};
+  $('#c-save').onclick=async()=>{
+    try{await api('country',{method:'PUT',body:{code:$('#c-code').value.trim(),name:$('#c-name').value.trim(),connectionId:$('#c-conn').value,callMode:$('#c-mode').value,callerNumber:$('#c-from').value,facts:readPairs($('#ed'),'facts'),answers:readPairs($('#ed'),'answers')}});loadScen()}
+    catch(e){$('#msg').innerHTML='<span class="err">'+esc(e.message)+'</span>'}};
+}
+
+/* ---------------- Settings ---------------- */
+async function loadSet(){
+  const s=await api('settings');const exp=s.tokenExpiresAt;
+  const expTxt=!s.hasToken?'<span class="pill bad">not set</span>':!exp?'<span class="pill gray">set (expiry unknown)</span>':exp<Date.now()?'<span class="pill bad">expired</span>':'<span class="pill ok">valid until '+fmtT(exp)+'</span>';
+  $('#t-set').innerHTML=`<div class="card" style="max-width:640px"><b>Platform</b>
+   <label>Platform origin</label><input id="s-origin" value="${esc(s.origin)}">
+   <label>Project id</label><input id="s-proj" value="${esc(s.projectId)}">
+   <label>Bearer token ${expTxt}</label><input id="s-token" type="password" placeholder="Paste a fresh token from Studio (stored locally, never shown again)">
+   <label>Default caller phone number on every call (E.164). A country or scenario can override it. Use it to filter sessions on the platform by caller.</label><input id="s-from" value="${esc(s.callerNumber||'')}" placeholder="+4915100000000" style="max-width:240px">
+   <b style="display:block;margin-top:18px">Gemini</b>
+   <label>API key ${s.hasGeminiKey?'<span class="pill ok">set</span>':'<span class="pill bad">not set</span>'}</label><input id="s-gem" type="password" placeholder="Leave blank to keep the current key">
+   <label>Caller (live) model</label><input id="s-live" value="${esc(s.liveModel)}">
+   <label>Max concurrent calls (1 to ${s.maxConcurrentCap}). Each call uses its own browser and Gemini session.</label><input id="s-conc" type="number" min="1" max="${s.maxConcurrentCap}" value="${s.maxConcurrent}" style="max-width:120px">
+   <label>Judge model (used from Phase 2)</label><input id="s-judge" value="${esc(s.judgeModel)}">
+   <div class="row" style="margin-top:14px"><button class="btn pri" id="s-save">Save</button><button class="btn" id="s-test">Test connection</button><span id="msg" class="sm"></span></div></div>`;
+  $('#s-save').onclick=async()=>{try{await api('settings',{method:'PUT',body:{origin:$('#s-origin').value,projectId:$('#s-proj').value,token:$('#s-token').value,geminiKey:$('#s-gem').value,liveModel:$('#s-live').value,judgeModel:$('#s-judge').value,maxConcurrent:Number($('#s-conc').value),callerNumber:$('#s-from').value}});channels=null;loadSet();updTok()}catch(e){$('#msg').innerHTML='<span class="err">'+esc(e.message)+'</span>'}};
+  $('#s-test').onclick=async()=>{$('#msg').textContent='Testing…';try{const r=await api('settings/test',{method:'POST',body:{}});$('#msg').innerHTML='<span style="color:var(--ok)">Connected. '+r.targets+' targets.</span>'}catch(e){$('#msg').innerHTML='<span class="err">'+esc(e.message)+'</span>'}};
+}
+function openTokBar(msg,isErr){
+  const bar=$('#tokbar');
+  bar.dataset.open='1';
+  bar.classList.remove('hidden');
+  bar.style.background=isErr?'var(--badbg)':'var(--accbg)';
+  bar.style.color=isErr?'var(--bad)':'var(--acc)';
+  bar.innerHTML=`<div class="row"><b class="sm">${msg}</b>
+   <input id="tb-in" type="password" placeholder="Paste bearer token" style="max-width:420px"><button class="btn pri sm" id="tb-save">Save and retry failed runs</button><button class="btn sm" id="tb-x">Close</button><span id="tb-msg" class="sm"></span></div>`;
+  $('#tb-in').focus();
+  $('#tb-x').onclick=()=>{bar.dataset.open='0';bar.classList.add('hidden')};
+  $('#tb-save').onclick=async()=>{
+    try{const r=await api('token',{method:'POST',body:{token:$('#tb-in').value}});
+      bar.dataset.open='0';bar.classList.add('hidden');
+      await updTok();pollJobs(true);if(tab==='runs')loadRuns();
+      alert(r.retried?('Token saved. Re-queued '+r.retried+' failed run(s).'):'Token saved.')}
+    catch(err){$('#tb-msg').textContent=err.message}};
+}
+async function updTok(){
+  const s=await api('settings');const e=s.tokenExpiresAt;
+  const bad=!s.hasToken||(e&&e<Date.now())||s.authFailed;
+  const left=e?Math.round((e-Date.now())/60000):null;
+  $('#tok').innerHTML=!s.hasToken?'<button class="pill bad" style="border:0;cursor:pointer">No token - add</button>':bad?'<button class="pill bad" style="border:0;cursor:pointer">Token expired - update</button>':'<button class="pill ok" style="border:0;cursor:pointer" title="Click to paste a new token">Token ok'+(left!==null?' ('+left+' min left)':'')+'</button>';
+  $('#tok').firstChild.onclick=()=>openTokBar('Paste a fresh bearer token from Studio:',bad);
+  const bar=$('#tokbar');
+  if(!bad){if(bar.dataset.open!=='1')bar.classList.add('hidden');return}
+  if(bar.dataset.open==='1')return;
+  openTokBar(s.authFailed?'A run failed because the bearer token was rejected. Paste a fresh one from Studio:':'The bearer token has expired. Paste a fresh one from Studio:',true);
+}
+setInterval(()=>{if($('#tokbar').dataset.open!=='1')updTok().catch(()=>{})},30000);
+
+/* ---------------- Jobs dock (live) ---------------- */
+let poll=null;
+let autoDock=true,dockSig='',dockHover=false;
+async function pollJobs(force){
+  clearTimeout(poll);
+  const {jobs:js,max}=await api('jobs');const dock=$('#dock');const dtop=dock.scrollTop;
+  // Only touch the DOM when something actually changed, and never while the pointer is over the panel.
+  const sig=JSON.stringify([max,autoDock,js.slice(0,10).map(j=>[j.id,j.status,j.error,j.lines.length,(j.lines[j.lines.length-1]||{}).text])]);
+  const keepGoing=()=>{if(js.some(j=>j.status==='queued'||j.status==='running')&&autoDock)poll=setTimeout(pollJobs,3000)};
+  if(!force&&(sig===dockSig||dockHover)&&!dock.classList.contains('hidden')){keepGoing();return}
+  dockSig=sig;
+  const act=js.filter(j=>j.status==='queued'||j.status==='running');
+  const active=act.length>0;
+  if(!js.length){dock.classList.add('hidden');return}
+  dock.classList.remove('hidden');
+  const nRun=js.filter(j=>j.status==='running').length,nQ=js.filter(j=>j.status==='queued').length;
+  dock.innerHTML=`<div class="row"><b class="sm">Calls: ${nRun} running of ${max} slots${nQ?', '+nQ+' queued':''}</b><span class="grow"></span><label class="sm" style="margin:0;display:flex;gap:4px;align-items:center"><input type="checkbox" id="dauto" ${autoDock?'checked':''} style="width:auto"> Auto</label><button class="btn sm" id="drf">Refresh</button><button class="btn sm" id="dx">Hide</button></div>`+js.slice(0,10).map(j=>`<div style="margin-top:8px;border-top:1px solid var(--line);padding-top:6px">
+   <div class="row"><span class="grow sm"><b>${esc(j.scenarioId||j.scenarioPath)}</b> <span class="mute">${esc(j.country||'')}</span></span><span class="pill ${j.status==='done'?'ok':j.status==='failed'?'bad':j.status==='running'?'run':'gray'}">${j.status}</span>
+   ${act.includes(j)?`<button class="btn sm del" data-cx="${j.id}">×</button>`:''}</div>
+   ${j.error?`<div class="err sm">${esc(j.error.slice(0,200))}</div>`:''}
+   ${j.status==='running'?`<div class="sm" style="max-height:110px;overflow:auto;margin-top:4px">${j.lines.map(l=>`<div><span class="mute">${l.who==='agent'?'Agent':'Caller'}:</span> ${esc(l.text.slice(0,120))}</div>`).join('')||'<span class="mute">Dialing…</span>'}</div>`:''}
+   <a href="#" class="sm" data-open="${esc(j.id)}">${j.status==='done'?'Open result':'Open'}</a></div>`).join('');
+  dock.scrollTop=dtop;
+  dock.onmouseenter=()=>{dockHover=true};
+  dock.onmouseleave=()=>{dockHover=false};
+  $('#dauto').onchange=e=>{autoDock=e.target.checked;if(autoDock)pollJobs(true)};
+  $('#drf').onclick=()=>pollJobs(true);
+  $('#dx').onclick=()=>dock.classList.add('hidden');
+  dock.querySelectorAll('[data-open]').forEach(a=>a.onclick=e=>{e.preventDefault();show('runs');openRun(a.dataset.open)});
+  dock.querySelectorAll('[data-cx]').forEach(b=>b.onclick=async()=>{await api('run/'+b.dataset.cx+'/cancel',{method:'POST',body:{}});pollJobs(true)});
+  if(js.some(j=>j.status==='failed'&&/HTTP 401/.test(j.error||'')))updTok();
+  if(active&&autoDock)poll=setTimeout(pollJobs,3000);else if(tab==='runs'&&!$('#back'))loadRuns();
+}
+updTok();loadRuns();pollJobs();
+</script>
+</body>
+</html>

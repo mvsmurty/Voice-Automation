@@ -1,0 +1,7 @@
+code: DE
+name: Germany
+connectionId: 01a0c20f-2f5f-78d1-b957-90c4c59b7188
+facts:
+  mobile_number: "+49 123456789"
+  email: "thomas.muller@example.com"
+answers: {}

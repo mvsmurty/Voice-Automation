@@ -1,0 +1,32 @@
+# Happy path: storage customer books a wheel change. The agent greets in German;
+# the caller switches to English and the rest of the call is English.
+id: book-wheel-change-en
+language: en-US
+persona: A polite customer calling a tyre shop. Speaks clear English, even though the greeting is in German.
+goal: Book an appointment for a wheel change for wheels that are stored with the shop.
+facts:
+  full_name: "Max Mustermann"
+  licence_plate: "H-SR 1605"
+  plate_district_letters: "H only (one letter, H as in Hannover) - the part BEFORE the hyphen"
+  plate_recognition_letters: "S R (two letters, S as in Sierra, R as in Romeo) - the part AFTER the hyphen"
+  plate_digits: "1 6 0 5 (say each digit separately)"
+  plate_e_or_h_suffix: "None. If asked about an E at the end, say no."
+  wheels_stored: "Yes, the wheels are stored with the shop"
+steps:
+  - Listen to the agent's greeting (it will be in German). Then say "Let's talk in English, please." and nothing else.
+  - When the agent continues in English, say "I'd like to book an appointment for a wheel change."
+  - If the agent asks for your first and last name at any point, say "Max Mustermann".
+  - The agent collects the plate in parts. Answer ONLY the part it asks - first the district letters (H), then the letters after the hyphen (S, R), then the digits (1, 6, 0, 5), then say no to any E/H suffix question. Never give the whole plate in one go and never put S or R into the district part.
+  - The agent will read the plate back. It must be exactly H, S R, 1605 (district H, letters SR, digits 1605). If any character is added, dropped or changed, say no, then re-give only the wrong part with spelling help (H as in Hannover). At most 3 attempts.
+  - When asked whether your wheels are stored with them, say yes.
+  - When the agent offers available dates, pick the first one it offers.
+  - When the agent lists times on that day, pick the first one it offers.
+  - When the agent reads back date, time and licence plate for confirmation, confirm with yes if correct.
+  - Listen for the booking reference number. Then, when asked if there is anything else, say no, thank them, and end the call.
+behaviour: Short natural sentences. Never volunteer information before it is asked.
+maxSeconds: 300
+expect:
+  - After the German greeting the agent switches to English when asked and stays in English.
+  - The agent reads back the licence plate and waits for confirmation before continuing.
+  - The agent offers dates, then times, then reads back date, time and plate before booking.
+  - The agent announces a booking reference number and asks if there is anything else.

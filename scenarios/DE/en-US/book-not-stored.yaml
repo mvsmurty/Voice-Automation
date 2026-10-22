@@ -1,0 +1,38 @@
+# Not-stored path: customer brings own wheels, books a complete seasonal wheel change.
+id: book-seasonal-not-stored-en
+language: en-US
+persona: A polite customer calling a tyre shop. Speaks clear English, even though the greeting is in German.
+goal: Book an appointment for a complete seasonal wheel change. The wheels are NOT stored with the shop; the customer brings them.
+facts:
+  full_name: "Thomas Muller"
+  licence_plate: "HD-PL 2538"
+  plate_district_letters: "H D (H as in Hannover, D as in Dora) - the part BEFORE the hyphen"
+  plate_recognition_letters: "P L (P as in Paula, L as in Ludwig) - the part AFTER the hyphen"
+  plate_digits: "2 5 3 8 (say each digit separately)"
+  plate_e_or_h_suffix: "None. If asked about an E or H at the end, say no."
+answers:
+  name: "Thomas Muller (spell it if asked: T-H-O-M-A-S, M-U-L-L-E-R)"
+  wheels stored with the shop: "No, they are not stored with the shop; I will bring them myself"
+  type of booking or service: "Complete seasonal wheel change"
+  wheel or rim size: "17 inches"
+  mobile or phone number: "+49 123456789"
+  email: "thomas.muller@example.com"
+  preferred day or time: "No preference, the next available is fine"
+  any other mandatory information: "Make up a plausible, simple value and keep it consistent"
+steps:
+  - Listen to the agent's greeting (it will be in German). Then say "Let's talk in English, please." and nothing else.
+  - When the agent continues in English, say "I'd like to book an appointment for a wheel change."
+  - The agent collects the plate in parts. Answer ONLY the part it asks - district letters (H, D), then letters after the hyphen (P, L), then digits (2, 5, 3, 8), then say no to any E/H suffix question. Never give the whole plate in one go.
+  - The agent will read the plate back. It must be exactly HD, PL, 2538. If any character is added, dropped or changed, say no, then re-give only the wrong part with spelling help. At most 3 attempts. If it is correct, say yes.
+  - When asked whether the wheels are stored with the shop, say no, you will bring them yourself.
+  - Answer any follow-up questions (booking type, wheel size, contact details) from the answers list.
+  - When the agent offers a date or time, accept the first one offered. If it lists several options, pick the first.
+  - When the agent reads back the appointment details for confirmation, say yes if the date, time and plate are right.
+  - Listen for the booking reference number. Then, when asked if there is anything else, say no, thank them, and end the call.
+behaviour: Short natural sentences. Never volunteer information before it is asked.
+maxSeconds: 420
+expect:
+  - The agent switches to English and stays in English.
+  - The agent reads back the plate HD-PL 2538 correctly before continuing.
+  - The agent follows the not-stored path and asks for wheel size and booking type.
+  - The agent reads back the appointment and announces a booking reference.

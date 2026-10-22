@@ -1,0 +1,12 @@
+# Example scenario. Replace persona/goal/facts with a real use case of the agent under test.
+id: example-de-smoke
+language: de-DE
+persona: Ein Kunde, höflich, spricht klar und ruhig.
+goal: Frage nach den Öffnungszeiten und beende danach das Gespräch.
+facts:
+  name: Max Mustermann
+behaviour: Kurze Sätze. Wenn der Agent sich wiederholt, sage es freundlich.
+maxSeconds: 90
+expect:
+  - Der Agent antwortet auf Deutsch.
+  - Der Agent nennt Öffnungszeiten oder verweist korrekt weiter.

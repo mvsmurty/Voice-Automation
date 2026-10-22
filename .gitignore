@@ -1,0 +1,8 @@
+node_modules
+dist
+runs
+.env
+data
+.DS_Store
+connections.json
+test.json
